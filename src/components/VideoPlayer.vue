@@ -42,6 +42,7 @@ const CONFIG = {
 }
 
 const currentIndex = ref(0)
+const isLoading = ref(true)
 const videoRef = ref<HTMLVideoElement | null>(null)
 const wrapperRef = ref<HTMLElement | null>(null)
 const state = ref<VideoState>({
@@ -228,6 +229,9 @@ function goTo(index: number) {
   state.value.rotateX = 0
   state.value.rotateY = 0
 
+  // 显示 loading
+  isLoading.value = true
+
   currentIndex.value = index
 
   // 等待视频加载后开始播放
@@ -268,6 +272,7 @@ function setupVideoListeners() {
 
   const handleLoadedMetadata = () => {
     video.currentTime = 0
+    isLoading.value = false
     startAutoPlay(1)
   }
 
@@ -316,17 +321,18 @@ function setupVideoListeners() {
         state.value.rafId = requestAnimationFrame(updateVideoTime)
       }
 
-      const rect = wrapper.getBoundingClientRect()
-      const centerX = rect.left + rect.width / 2
-      const centerY = rect.top + rect.height / 2
+      // 3D 倾斜效果 - 暂时注释掉
+      // const rect = wrapper.getBoundingClientRect()
+      // const centerX = rect.left + rect.width / 2
+      // const centerY = rect.top + rect.height / 2
 
-      const percentX = (e.clientX - centerX) / (rect.width / 2)
-      const percentY = (e.clientY - centerY) / (rect.height / 2)
+      // const percentX = (e.clientX - centerX) / (rect.width / 2)
+      // const percentY = (e.clientY - centerY) / (rect.height / 2)
 
-      const maxRotate = 15
+      // const maxRotate = 15
 
-      state.value.rotateX = percentY * maxRotate
-      state.value.rotateY = -percentX * maxRotate
+      // state.value.rotateX = percentY * maxRotate
+      // state.value.rotateY = -percentX * maxRotate
     }
   }
 
@@ -386,10 +392,17 @@ onUnmounted(() => {
             muted
             playsinline
             preload="auto"
+          />
+          <!-- 3D 倾斜效果 - 暂时注释掉
             :style="{
               transform: `rotateX(${state.rotateX}deg) rotateY(${state.rotateY}deg)`,
             }"
-          />
+          -->
+          <!-- Loading 遮罩 -->
+          <div v-if="isLoading" class="loading-overlay">
+            <div class="loading-spinner" />
+            <span class="loading-text">加载中...</span>
+          </div>
         </div>
       </div>
 
@@ -526,6 +539,43 @@ onUnmounted(() => {
   transition:
     transform 0.05s ease-out,
     box-shadow 0.3s ease;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(26, 26, 46, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  border-radius: 12px;
+  z-index: 10;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #4fc3f7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .indicator {
